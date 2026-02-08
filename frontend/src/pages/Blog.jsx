@@ -4,9 +4,18 @@ import { assets, blog_data, comments_data } from '../assets/assets';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Moment from 'moment';
+import { useAppContext } from '../context/AppContext';
+import toast from 'react-hot-toast';
 
-function Blog() {const { id } = useParams();
+function Blog() {
+  const { id } = useParams();
 
+  
+  const { axios } = useAppContext();   
+  const [name, setName] = useState('');
+  const [content, setContent ] = useState('');
+
+  
   const [data, setData] = useState(null);
   const [comments, setComments] = useState([]);
 
@@ -16,14 +25,44 @@ function Blog() {const { id } = useParams();
     content: ""
   });
 
-  const fetchComments = async () => {
-    setComments(comments_data);
-  };
+    // setComments(comments_data);  // fetch Comments  from data Base
+const fetchComments = async () => {
+  try {
+    const { data } = await axios.post('/api/blog/comments', {
+      blogId: id
+    });
 
-  const fetchBlog = () => {
-    const blog = blog_data.find(item => item._id === id);
-    setData(blog);
-  };
+    if (data.success) {
+      setComments(data.comment);
+
+
+      
+    } else {
+      toast.error(data.message);
+    }
+
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+
+    // const blog = blog_data.find(item => item._id === id);
+    // setData(blog);
+   const fetchBlog = async () => {
+  try {
+    const { data } = await axios.get(`/api/blog/${id}`);
+
+    if (data.success) {
+      setData(data.blog); // ✅ EXACT match with backend
+    } else {
+      toast.error(data.message);
+    }
+
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+
 
   // ✅ Correct change handler
   const handleChange = (e) => {
@@ -35,20 +74,39 @@ function Blog() {const { id } = useParams();
     }));
   };
 
-  // ✅ Correct submit handler
-  const addComment = (e) => {
-    e.preventDefault();
+  const addComment = async (e) => {
+  e.preventDefault();
 
-    setComments(prev => [
-      ...prev,
-      comment
-    ]);
+  if (!comment.name || !comment.content) {
+    toast.error("All fields are required");
+    return;
+  }
 
-    // clear form
-    setComment({
-      name: "",
-      content: ""
+  try {
+    const { data } = await axios.post('/api/blog/add-comment', {
+      blog: id,
+      name: comment.name,
+      content: comment.content
     });
+
+    if (data.success) {
+      toast.success(data.message);
+
+      // clear form
+      setComment({
+        name: "",
+        content: ""
+      });
+
+      fetchComments(); // refresh comments list
+    } else {
+      toast.error(data.message);
+    }
+
+  } catch (error) {
+    toast.error(error.response?.data?.message || error.message);
+  }
+
   };
 
   useEffect(() => {

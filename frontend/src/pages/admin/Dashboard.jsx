@@ -2,6 +2,7 @@ import React from 'react'
 import { assets ,dashboard_data } from '../../assets/assets'
 import {useState ,useEffect}  from  'react'
 import BlogtableItem from '../../components/admin/BlogtableItem';
+import { useAppContext } from '../../context/AppContext';
 
 function Dashboard() {
   const[dasboardData ,setDashboardData]=useState({
@@ -12,8 +13,22 @@ function Dashboard() {
 
   });
 
+  const { axios } = useAppContext();
+
   const fetchDashboard= async ()=>{
-    setDashboardData(dashboard_data);
+    // setDashboardData(dashboard_data);
+    try {
+      const { data } = await axios.get('/api/admin/dashboard');
+
+      data.success ? setDashboardData(data.dashboardData) : toast.error(data.message);
+
+
+      
+    } catch (error) {
+      toast.error(error.message);
+      
+    }
+
     
   } 
    useEffect(()=>{

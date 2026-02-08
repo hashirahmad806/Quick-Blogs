@@ -1,16 +1,60 @@
 
 import React from 'react'
 import { useState } from 'react';
+import { useAppContext } from '../../context/AppContext';
+ import toast from 'react-hot-toast';
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { axios, setToken } = useAppContext();
 
-  const handSubmit = (e) => {
-    e.preventDefault()
+//   const handSubmit  = async (e) => {
+//     e.preventDefault()
+//     const { data } = await axios.post('/api/admin/login', { email, password });
+//     try {
+//       if (data.success) {
+//         setToken(data.token)
+//         axios.defaults.headers.common['Authorization'] = data.axios;
+//        toast.success(data.message);
 
-     
+//       }else {
+//         console.log(data);
+//        toast.error(data.message);
+// }
+      
+//     }
+//     catch (error) {
+//       toast.error(error.message);
+
+      
+  //     }
+  
+const handSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const { data } = await axios.post('/api/admin/login', {
+      email,
+      password,
+    });
+
+    // success (200)
+    setToken(data.token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    toast.success(data.message);
+
+  } catch (error) {
+    // 🔥 PREVENT "Uncaught (in promise)"
+    if (error.response) {
+      // Backend responded (401, 500, etc.)
+      toast.error(error.response.data.message);
+    } else {
+      // Network / unknown error
+      toast.error("Something went wrong");
+    }
   }
+};
 
   return (
     <div className=' flex items-center justify-center h-screen'>
